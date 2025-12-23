@@ -5,89 +5,332 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Miami Vice Calculator</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             background-color: #FF1493;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
         }
+
         .calculator {
             background-color: #00CED1;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 320px;
         }
+
+        h1 {
+            text-align: center;
+            color: #FF1493;
+            margin: 0 0 15px 0;
+            font-size: 1.4rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
         #display {
             width: 100%;
-            height: 50px;
-            font-size: 24px;
+            height: 70px;
+            font-size: 2rem;
             text-align: right;
-            margin-bottom: 10px;
-            padding: 5px;
-            box-sizing: border-box;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            background-color: #1a1a2e;
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
         }
+
         .buttons {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
         }
+
         button {
-            width: 100%;
-            height: 50px;
-            font-size: 20px;
+            height: 60px;
+            font-size: 1.3rem;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             background-color: #1E90FF;
             color: white;
+            transition: all 0.15s ease;
+            font-weight: bold;
         }
+
         button:hover {
             background-color: #4169E1;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .operator {
+            background-color: #FF1493;
+        }
+
+        .operator:hover {
+            background-color: #FF69B4;
+        }
+
+        .clear {
+            background-color: #FF4500;
+        }
+
+        .clear:hover {
+            background-color: #FF6347;
+        }
+
+        .equals {
+            background-color: #32CD32;
+        }
+
+        .equals:hover {
+            background-color: #3CB371;
+        }
+
+        .backspace {
+            background-color: #FFD700;
+            color: #1a1a2e;
+        }
+
+        .backspace:hover {
+            background-color: #FFA500;
         }
     </style>
 </head>
 <body>
     <div class="calculator">
-        <input type="text" id="display" readonly>
+        <h1>Miami Vice Calculator</h1>
+        <input type="text" id="display" readonly value="0">
         <div class="buttons">
-            <button onclick="appendToDisplay('7')">7</button>
-            <button onclick="appendToDisplay('8')">8</button>
-            <button onclick="appendToDisplay('9')">9</button>
-            <button onclick="appendToDisplay('/')">/</button>
-            <button onclick="appendToDisplay('4')">4</button>
-            <button onclick="appendToDisplay('5')">5</button>
-            <button onclick="appendToDisplay('6')">6</button>
-            <button onclick="appendToDisplay('*')">*</button>
-            <button onclick="appendToDisplay('1')">1</button>
-            <button onclick="appendToDisplay('2')">2</button>
-            <button onclick="appendToDisplay('3')">3</button>
-            <button onclick="appendToDisplay('-')">-</button>
-            <button onclick="appendToDisplay('0')">0</button>
-            <button onclick="appendToDisplay('.')">.</button>
-            <button onclick="calculate()">=</button>
-            <button onclick="appendToDisplay('+')">+</button>
-            <button onclick="clearDisplay()">C</button>
+            <button onclick="clearAll()" class="clear">C</button>
+            <button onclick="backspace()" class="backspace">←</button>
+            <button onclick="inputOperator('/')" class="operator">÷</button>
+            <button onclick="inputOperator('*')" class="operator">×</button>
+
+            <button onclick="inputDigit('7')">7</button>
+            <button onclick="inputDigit('8')">8</button>
+            <button onclick="inputDigit('9')">9</button>
+            <button onclick="inputOperator('-')" class="operator">−</button>
+
+            <button onclick="inputDigit('4')">4</button>
+            <button onclick="inputDigit('5')">5</button>
+            <button onclick="inputDigit('6')">6</button>
+            <button onclick="inputOperator('+')" class="operator">+</button>
+
+            <button onclick="inputDigit('1')">1</button>
+            <button onclick="inputDigit('2')">2</button>
+            <button onclick="inputDigit('3')">3</button>
+            <button onclick="calculate()" class="equals" style="grid-row: span 2;">=</button>
+
+            <button onclick="inputDigit('0')" style="grid-column: span 2;">0</button>
+            <button onclick="inputDecimal()">.</button>
         </div>
     </div>
+
     <script>
-        function appendToDisplay(value) {
-            document.getElementById('display').value += value;
+        // Calculator state
+        let firstOperand = null;
+        let secondOperand = null;
+        let currentOperator = null;
+        let displayValue = '0';
+        let waitingForSecondOperand = false;
+
+        // Get display element
+        const display = document.getElementById('display');
+
+        // Update display
+        function updateDisplay() {
+            display.value = displayValue;
         }
 
-        function clearDisplay() {
-            document.getElementById('display').value = '';
+        // Basic math operations
+        function add(a, b) {
+            return a + b;
         }
 
-        function calculate() {
-            try {
-                document.getElementById('display').value = eval(document.getElementById('display').value);
-            } catch (error) {
-                document.getElementById('display').value = 'Error';
+        function subtract(a, b) {
+            return a - b;
+        }
+
+        function multiply(a, b) {
+            return a * b;
+        }
+
+        function divide(a, b) {
+            if (b === 0) {
+                return 'NICE TRY, HOTSHOT';
+            }
+            return a / b;
+        }
+
+        // Operate function - calls the appropriate math function
+        function operate(operator, a, b) {
+            switch (operator) {
+                case '+':
+                    return add(a, b);
+                case '-':
+                    return subtract(a, b);
+                case '*':
+                    return multiply(a, b);
+                case '/':
+                    return divide(a, b);
+                default:
+                    return b;
             }
         }
+
+        // Round long decimals to prevent overflow
+        function roundResult(num) {
+            if (typeof num === 'string') return num;
+            return Math.round(num * 1000000000) / 1000000000;
+        }
+
+        // Input a digit
+        function inputDigit(digit) {
+            if (waitingForSecondOperand) {
+                displayValue = digit;
+                waitingForSecondOperand = false;
+            } else {
+                displayValue = displayValue === '0' ? digit : displayValue + digit;
+            }
+            updateDisplay();
+        }
+
+        // Input decimal point
+        function inputDecimal() {
+            // If waiting for second operand, start with '0.'
+            if (waitingForSecondOperand) {
+                displayValue = '0.';
+                waitingForSecondOperand = false;
+                updateDisplay();
+                return;
+            }
+
+            // Only add decimal if there isn't one already
+            if (!displayValue.includes('.')) {
+                displayValue += '.';
+                updateDisplay();
+            }
+        }
+
+        // Input an operator
+        function inputOperator(nextOperator) {
+            const inputValue = parseFloat(displayValue);
+
+            // If we already have an operator and aren't waiting, calculate first
+            if (currentOperator && !waitingForSecondOperand) {
+                const result = operate(currentOperator, firstOperand, inputValue);
+                displayValue = String(roundResult(result));
+                firstOperand = typeof result === 'string' ? 0 : result;
+                updateDisplay();
+            } else {
+                firstOperand = inputValue;
+            }
+
+            waitingForSecondOperand = true;
+            currentOperator = nextOperator;
+        }
+
+        // Calculate the result
+        function calculate() {
+            // Don't calculate if we don't have enough info
+            if (currentOperator === null || waitingForSecondOperand) {
+                return;
+            }
+
+            secondOperand = parseFloat(displayValue);
+            const result = operate(currentOperator, firstOperand, secondOperand);
+
+            displayValue = String(roundResult(result));
+            updateDisplay();
+
+            // Reset for next calculation
+            firstOperand = typeof result === 'string' ? 0 : result;
+            currentOperator = null;
+            waitingForSecondOperand = true;
+        }
+
+        // Clear all
+        function clearAll() {
+            displayValue = '0';
+            firstOperand = null;
+            secondOperand = null;
+            currentOperator = null;
+            waitingForSecondOperand = false;
+            updateDisplay();
+        }
+
+        // Backspace - delete last character
+        function backspace() {
+            if (waitingForSecondOperand) return;
+
+            if (displayValue.length === 1 || (displayValue.length === 2 && displayValue[0] === '-')) {
+                displayValue = '0';
+            } else {
+                displayValue = displayValue.slice(0, -1);
+            }
+            updateDisplay();
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+
+            // Prevent default for calculator keys
+            if (/^[0-9.+\-*\/=]$/.test(key) || key === 'Enter' || key === 'Backspace' || key === 'Escape' || key === 'Delete') {
+                event.preventDefault();
+            }
+
+            // Digits
+            if (/^[0-9]$/.test(key)) {
+                inputDigit(key);
+            }
+            // Decimal
+            else if (key === '.') {
+                inputDecimal();
+            }
+            // Operators
+            else if (key === '+') {
+                inputOperator('+');
+            }
+            else if (key === '-') {
+                inputOperator('-');
+            }
+            else if (key === '*') {
+                inputOperator('*');
+            }
+            else if (key === '/') {
+                inputOperator('/');
+            }
+            // Equals
+            else if (key === '=' || key === 'Enter') {
+                calculate();
+            }
+            // Clear
+            else if (key === 'Escape' || key === 'Delete') {
+                clearAll();
+            }
+            // Backspace
+            else if (key === 'Backspace') {
+                backspace();
+            }
+        });
+
+        // Initialize display
+        updateDisplay();
     </script>
 </body>
 </html>
